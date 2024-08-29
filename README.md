@@ -10,7 +10,6 @@ Crie um diretório vazio onde você deseja armazenar seu projeto Django.
 Execute o seguinte comando para criar um novo projeto Django:
 
 ```
-
 django-admin startproject setup .
 ```
 

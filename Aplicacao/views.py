@@ -1,4 +1,3 @@
-import csv  
 from rest_framework.decorators import action 
 from rest_framework import viewsets, permissions, status, serializers 
 from rest_framework.response import Response
@@ -9,12 +8,15 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User as DjangoUser
 from django.http import HttpResponse
 from .models import Cliente, Ordem, Compartilhamento, FavoritasCliente, FavoritasOrdem, Comentario, Anexo
-from .serializers import ( UserSerializer, ClienteSerializer, OrdemSerializer, LoginSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer, PasswordChangeSerializer, CompartilhamentoSerializer, FavoritasClienteSerializer, FavoritasOrdemSerializer, ComentarioSerializer, AnexoSerializer)
+from .serializers import (UserSerializer, ClienteSerializer, OrdemSerializer, LoginSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer, PasswordChangeSerializer, CompartilhamentoSerializer, FavoritasClienteSerializer, FavoritasOrdemSerializer, ComentarioSerializer, AnexoSerializer)
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 from django.contrib.auth import authenticate, login as django_login
 from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated
+
+from django.http import FileResponse
+from fpdf import FPDF
 
 NOTIFICACOES = {}
 UserModel = get_user_model()
@@ -556,39 +558,40 @@ class CompartilhamentoViewSet(viewsets.ModelViewSet):
             import traceback
             traceback.print_exc()
             return Response({'detail': 'Erro ao buscar permissão.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-class RelatorioCSVView(APIView): ##deve ser mudado para txt
+        
+class RelatorioPDFView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, ordem_id, *args, **kwargs):
-        print("Recebida solicitação de geração de relatório CSV para OS:", ordem_id)
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="relatorio_ordem_{ordem_id}.csv"'
+        print(f"Solicitação recebida para gerar relatório PDF para a ordem ID: {ordem_id}")
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
 
-        # Definir a codificação utf-8-sig para garantir compatibilidade com o Excel
-        response.write('\ufeff'.encode('utf8'))
-
-        writer = csv.writer(response)
-        writer.writerow(['Ordem de Serviço'])
+        pdf.cell(200, 10, txt="Ordem de Serviço", ln=True, align="C")
 
         try:
             ordem = Ordem.objects.get(user=request.user, id=ordem_id)
-            writer.writerow([f'ID: {ordem.id}'])
-            writer.writerow([f'Data de Abertura: {ordem.data_abertura.strftime("%d/%m/%Y")}'])  # Formatar data para dd/mm/yyyy
-            writer.writerow([f'Status: {ordem.status}'])
-            writer.writerow([f'Hardware: {ordem.hardware}'])
-            writer.writerow([f'Serviço: {ordem.servico}'])
-            writer.writerow([f'Prioridade: {ordem.prioridade}'])
-            writer.writerow([f'Descrição: {ordem.descricao}'])
-            writer.writerow([f'Cliente: {ordem.cliente.nome if ordem.cliente else "Desconhecido"}'])
-            print("Relatório CSV gerado com sucesso")
+            print(f"Ordem encontrada: ID={ordem.id}, Cliente={ordem.cliente.nome if ordem.cliente else 'Desconhecido'}")
+            pdf.cell(200, 10, txt=f"ID: {ordem.id}", ln=True, align="L")
+            pdf.cell(200, 10, txt=f"Data de Abertura: {ordem.data_abertura.strftime('%d/%m/%Y')}", ln=True, align="L")
+            pdf.cell(200, 10, txt=f"Status: {ordem.status}", ln=True, align="L")
+            pdf.cell(200, 10, txt=f"Hardware: {ordem.hardware}", ln=True, align="L")
+            pdf.cell(200, 10, txt=f"Serviço: {ordem.servico}", ln=True, align="L")
+            pdf.cell(200, 10, txt=f"Prioridade: {ordem.prioridade}", ln=True, align="L")
+            pdf.cell(200, 10, txt=f"Descrição: {ordem.descricao}", ln=True, align="L")
+            pdf.cell(200, 10, txt=f"Cliente: {ordem.cliente.nome if ordem.cliente else 'Desconhecido'}", ln=True, align="L")
         except Ordem.DoesNotExist:
-            print("Ordem de serviço não encontrada")
-            response['Content-Disposition'] = 'attachment; filename="ordem_nao_encontrada.csv"'
-            writer.writerow(['Ordem de serviço não encontrada'])
+            print(f"Erro: Ordem de serviço ID {ordem_id} não encontrada.")
+            pdf.cell(200, 10, txt="Ordem de serviço não encontrada", ln=True, align="C")
 
-        return response
+        # Salvar o PDF temporariamente no servidor
+        temp_file_path = f'/tmp/relatorio_ordem_{ordem_id}.pdf'
+        pdf.output(temp_file_path)
+        print(f"PDF salvo em {temp_file_path}")
+
+        # Retornar o PDF como um FileResponse
+        return FileResponse(open(temp_file_path, 'rb'), content_type='application/pdf', as_attachment=True, filename=f"relatorio_ordem_{ordem_id}.pdf")
 
 class NotificacaoView(APIView):
     permission_classes = [IsAuthenticated]

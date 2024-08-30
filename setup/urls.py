@@ -5,7 +5,7 @@ from django.urls import path, include
 from rest_framework import routers, permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-from Aplicacao.views import (FavoritasClienteViewSet, FavoritasOrdemViewSet, UserViewSet, ClienteViewSet, OrdemViewSet, SignupView, LoginView, LogoutView, PasswordResetView, PasswordResetConfirmView, PasswordChangeView, CompartilhamentoViewSet, ComentarioViewSet, AnexoViewSet, RelatorioCSVView, NotificacaoView)
+from Aplicacao.views import (FavoritasClienteViewSet, FavoritasOrdemViewSet, UserViewSet, ClienteViewSet, OrdemViewSet, SignupView, LoginView, LogoutView, PasswordResetView, PasswordResetConfirmView, PasswordChangeView, CompartilhamentoViewSet, ComentarioViewSet, AnexoViewSet, RelatorioPDFView, NotificacaoView)
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -38,7 +38,7 @@ urlpatterns = [
     path('api/password-reset/', PasswordResetView.as_view(), name='password_reset'),
     path('api/password-reset-confirm/<uidb64>/<token>/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('api/password-change/', PasswordChangeView.as_view(), name='password_change'),
-    path('api/relatorio-csv/<int:ordem_id>/', RelatorioCSVView.as_view(), name='relatorio_csv'),
+    path('api/relatorio-pdf/<int:ordem_id>/', RelatorioPDFView.as_view(), name='relatorio_pdf'),
     path('api/notificacoes/', NotificacaoView.as_view(), name='notificacoes'),
     path('api/notificacoes/Limpar/', NotificacaoView.as_view(), name='notificacoes-limpar'),
     path('api/compartilhamento/ordem/<int:pk>/permissao/', CompartilhamentoViewSet.as_view({'get': 'permissao'}), name='compartilhamento-permissao'),

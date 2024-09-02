@@ -39,5 +39,6 @@ jobs:
       run: |
         echo "Deploying to EC2 instance..."
         scp -i $EC2_KEY -r * $EC2_USER@$EC2_HOST:/path/to/your/project
+        
         ssh -i $EC2_KEY $EC2_USER@$EC2_HOST "cd /path/to/your/project && ./deploy.sh"
 

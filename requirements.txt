@@ -26,4 +26,5 @@ typing_extensions==4.0.1
 uritemplate==4.1.1
 urllib3==1.26.7
 python-dotenv==1.0.0
+
 fpdf2==2.5.6
